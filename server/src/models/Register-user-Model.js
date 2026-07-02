@@ -42,6 +42,7 @@ const registerUserSchema = new mongoose.Schema(
         }
       },
     },
+// 👇 rest of the things come from backend
     credits: {
       type: Number,
       default: 10,
@@ -125,4 +126,4 @@ const registerUserSchema = new mongoose.Schema(
 // create a model for the user registration data using the defined schema
 const RegisterUserModel = mongoose.model("RegisterUser", registerUserSchema)
 // Export the RegisterUserModel to be used in other parts of the application
-module.exports = RegisterUserModel
+module.exports = {RegisterUserModel}
