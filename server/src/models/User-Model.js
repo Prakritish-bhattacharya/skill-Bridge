@@ -1,5 +1,6 @@
 const mongoose = require("mongoose"); // Import the mongoose module to interact with MongoDB
 const validator = require("validator"); // Import the validator module to validate required fields
+const jwt = require("jsonwebtoken");
 
 // Define a schema for the user registration data
 const registerUserSchema = new mongoose.Schema(
@@ -42,7 +43,7 @@ const registerUserSchema = new mongoose.Schema(
         }
       },
     },
-// 👇 rest of the things come from backend
+    // 👇 rest of the things come from backend
     credits: {
       type: Number,
       default: 10,
@@ -123,7 +124,17 @@ const registerUserSchema = new mongoose.Schema(
   },
 );
 
+// Schema level JWT
+registerUserSchema.methods.getJWT =  function () {
+  const user = this;
+
+  const token =  jwt.sign({ _id: user._id }, "skillBridge@123@#$&*", {
+    expiresIn: "7d",
+  });
+  return token;
+};
+
 // create a model for the user registration data using the defined schema
-const RegisterUserModel = mongoose.model("RegisterUser", registerUserSchema)
-// Export the RegisterUserModel to be used in other parts of the application
-module.exports = {RegisterUserModel}
+const UserModel = mongoose.model("User", registerUserSchema);
+// Export the UserModel to be used in other parts of the application
+module.exports = { UserModel };

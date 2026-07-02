@@ -1,8 +1,8 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 
-const { RegisterUserModel } = require("../models/Register-user-Model"); 
-const { validateUserCred } = require("../utils/validate-User-Cred");
+const { UserModel } = require("../../models/User-Model"); 
+const { validateUserCred } = require("../../utils/validate-User-Cred");
 
 const registerRoute = express.Router();
 
@@ -22,7 +22,7 @@ registerRoute.post("/register", async (req, res) => {
         const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
         // Create user
-        const newUser = new RegisterUserModel({
+        const newUser = new UserModel({
             firstName,
             lastName,
             emailId,
