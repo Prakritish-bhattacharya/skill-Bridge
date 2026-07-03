@@ -43,6 +43,15 @@ const registerUserSchema = new mongoose.Schema(
         }
       },
     },
+    photoUrl:{
+      type: String,
+      default: "https://www.pngkey.com/png/full/115-1150152_default-profile-picture-avatar-png-green.png",
+      validate(value){
+        if(!validator.isURL(value)){
+          throw new Error("Invalid Photo URL !!!")
+        }
+      }
+    },
     // 👇 rest of the things come from backend
     credits: {
       type: Number,
@@ -123,6 +132,8 @@ const registerUserSchema = new mongoose.Schema(
     timestamps: true, // Automatically add createdAt and updatedAt fields to the schema
   },
 );
+
+
 
 // Schema level JWT
 registerUserSchema.methods.getJWT =  function () {

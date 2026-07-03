@@ -1,7 +1,7 @@
 const validator = require("validator");
 
 const validateEditProfileData = (req) => {
-  const allowedEditFields = ["firstName", "lastName", "gender"];
+  const allowedEditFields = ["firstName", "lastName", "gender", "photoUrl"];
 
   const updateFields = Object.keys(req.body);
 
@@ -12,7 +12,7 @@ const validateEditProfileData = (req) => {
 
   // Check allowed fields
   const isEditAllowed = updateFields.every((field) =>
-    allowedEditFields.includes(field)
+    allowedEditFields.includes(field),
   );
 
   if (!isEditAllowed) {
@@ -49,6 +49,18 @@ const validateEditProfileData = (req) => {
   if ("gender" in req.body) {
     if (!["male", "female", "other"].includes(req.body.gender)) {
       throw new Error("Invalid Gender.");
+    }
+  }
+  // ---------photoUrl----------
+  if ("photoUrl" in req.body) {
+    if (typeof req.body.photoUrl !== "string") {
+      throw new Error("Photo URL must be a string.");
+    }
+
+    req.body.photoUrl = req.body.photoUrl.trim();
+
+    if (!validator.isURL(req.body.photoUrl)) {
+      throw new Error("Invalid Photo URL.");
     }
   }
 

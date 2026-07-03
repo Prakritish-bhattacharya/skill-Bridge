@@ -21,7 +21,7 @@ editProfileRouter.patch("/profile/edit", userAuth, async (req, res) => {
     // Save updated document
     await loggedInUser.save();
 
-    const { firstName, lastName, gender } = loggedInUser;
+    const { firstName, lastName, gender, photoUrl } = loggedInUser;
 
     return res.status(200).json({
       success: true,
@@ -30,6 +30,7 @@ editProfileRouter.patch("/profile/edit", userAuth, async (req, res) => {
         firstName,
         lastName,
         gender,
+        photoUrl
       },
     });
   } catch (error) {
