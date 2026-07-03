@@ -8,12 +8,14 @@ app.use(cookieparser())
 const { registerRoute } = require("./routes/Authentication/Register-route");
 const {loginRoute, logoutRoute} = require("./routes/Authentication/Login-route")
 const {profileRouter} = require("./routes/Profile/Profile-View")
+const {editProfileRouter} = require("./routes/Profile/Profile-Edit")
 
 // asign Routers
 app.use("/", registerRoute); // Use the registerRoute for handling requests to the root path ("/")
 app.use("/", loginRoute) 
 app.use("/", logoutRoute)
 app.use("/", profileRouter)
+app.use("/", editProfileRouter)
 
 // connect to the mongoDB database using the connectDB function
 connectDB()
