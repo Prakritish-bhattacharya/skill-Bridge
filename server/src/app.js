@@ -10,6 +10,8 @@ const {loginRoute, logoutRoute} = require("./routes/Authentication/Login-route")
 const {profileRouter} = require("./routes/Profile/Profile-View")
 const {editProfileRouter} = require("./routes/Profile/Profile-Edit")
 const {publicProfileRouter} = require("./routes/Profile/Public-Profile")
+const {AddSkillRouter} = require("./routes/Skill/Add-Skill")
+const {GetSkillRouter} = require("../src/routes/Skill/Get-Skill")
 
 // asign Routers
 app.use("/", registerRoute); // Use the registerRoute for handling requests to the root path ("/")
@@ -18,6 +20,8 @@ app.use("/", logoutRoute)
 app.use("/", profileRouter)
 app.use("/", editProfileRouter)
 app.use("/", publicProfileRouter)
+app.use("/api/v1/users/me/skills", AddSkillRouter)
+app.use("/api/v1/users/me/skills", GetSkillRouter)
 
 // connect to the mongoDB database using the connectDB function
 connectDB()

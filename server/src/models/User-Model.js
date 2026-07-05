@@ -1,6 +1,60 @@
 const mongoose = require("mongoose"); // Import the mongoose module to interact with MongoDB
 const validator = require("validator"); // Import the validator module to validate required fields
+const {
+  SKILL_CATEGORIES,
+  SKILL_TYPES,
+  SKILL_LEVELS,
+} = require("../constants/skillConstants");
 const jwt = require("jsonwebtoken");
+
+/*===============================
+ *  User Skill Subdocument Schema
+ *  Each user owns multiple skills
+ *===============================
+ */
+const userSkillSchema = new mongoose.Schema(
+  {
+    skillName: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+    },
+    category: {
+      type: String,
+      required: true,
+      enum: SKILL_CATEGORIES,
+    },
+
+    type: {
+      type: String,
+      required: true,
+      enum: SKILL_TYPES,
+    },
+
+    level: {
+      type: String,
+      required: true,
+      enum: SKILL_LEVELS,
+    },
+
+    experience: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    description: {
+      type: String,
+      trim: true,
+      maxlength: [300, "Description can't exceed 300 characters"],
+      default: "",
+    },
+  },
+  {
+    timestamps: true,
+  },
+);
 
 // Define a schema for the user registration data
 const registerUserSchema = new mongoose.Schema(
@@ -43,14 +97,15 @@ const registerUserSchema = new mongoose.Schema(
         }
       },
     },
-    photoUrl:{
+    photoUrl: {
       type: String,
-      default: "https://www.pngkey.com/png/full/115-1150152_default-profile-picture-avatar-png-green.png",
-      validate(value){
-        if(!validator.isURL(value)){
-          throw new Error("Invalid Photo URL !!!")
+      default:
+        "https://www.pngkey.com/png/full/115-1150152_default-profile-picture-avatar-png-green.png",
+      validate(value) {
+        if (!validator.isURL(value)) {
+          throw new Error("Invalid Photo URL !!!");
         }
-      }
+      },
     },
     // 👇 rest of the things come from backend
     credits: {
@@ -127,19 +182,21 @@ const registerUserSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    skills: {
+      type: [userSkillSchema],
+      default: [],
+    },
   },
   {
     timestamps: true, // Automatically add createdAt and updatedAt fields to the schema
   },
 );
 
-
-
 // Schema level JWT
-registerUserSchema.methods.getJWT =  function () {
+registerUserSchema.methods.getJWT = function () {
   const user = this;
 
-  const token =  jwt.sign({ _id: user._id }, "skillBridge@123@#$&*", {
+  const token = jwt.sign({ _id: user._id }, "skillBridge@123@#$&*", {
     expiresIn: "7d",
   });
   return token;
