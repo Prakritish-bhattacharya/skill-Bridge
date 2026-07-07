@@ -16,6 +16,7 @@ const { publicProfileRouter } = require("./routes/Profile/Public-Profile");
 const { AddSkillRouter } = require("./routes/Skill/Add-Skill");
 const { GetSkillRouter } = require("../src/routes/Skill/Get-Skill");
 const { UpdateSkillRouter } = require("./routes/Skill/Update-Skill");
+const {DeleteSkillRouter} = require("../src/routes/Skill/Delete-Skill")
 
 // asign Routers
 app.use("/", registerRoute); // Use the registerRoute for handling requests to the root path ("/")
@@ -27,6 +28,7 @@ app.use("/", publicProfileRouter);
 app.use("/api/v1/users/me/skills", AddSkillRouter);
 app.use("/api/v1/users/me/skills", GetSkillRouter);
 app.use("/api/v1/users/me/skills", UpdateSkillRouter);
+app.use("/api/v1/users/me/skills", DeleteSkillRouter);
 
 // connect to the mongoDB database using the connectDB function
 connectDB()
