@@ -1,27 +1,32 @@
 const express = require("express"); // Import the express module to create an Express application
 const { connectDB } = require("./config/database"); // Import the connectDB function from the database configuration file to establish a connection to the MongoDB database
-const cookieparser = require("cookie-parser")
+const cookieparser = require("cookie-parser");
 const app = express(); // Create an instance of the Express application
 app.use(express.json()); // Middleware to parse JSON request bodies
-app.use(cookieparser())
+app.use(cookieparser());
 // import Routes from routes folder
 const { registerRoute } = require("./routes/Authentication/Register-route");
-const {loginRoute, logoutRoute} = require("./routes/Authentication/Login-route")
-const {profileRouter} = require("./routes/Profile/Profile-View")
-const {editProfileRouter} = require("./routes/Profile/Profile-Edit")
-const {publicProfileRouter} = require("./routes/Profile/Public-Profile")
-const {AddSkillRouter} = require("./routes/Skill/Add-Skill")
-const {GetSkillRouter} = require("../src/routes/Skill/Get-Skill")
+const {
+  loginRoute,
+  logoutRoute,
+} = require("./routes/Authentication/Login-route");
+const { profileRouter } = require("./routes/Profile/Profile-View");
+const { editProfileRouter } = require("./routes/Profile/Profile-Edit");
+const { publicProfileRouter } = require("./routes/Profile/Public-Profile");
+const { AddSkillRouter } = require("./routes/Skill/Add-Skill");
+const { GetSkillRouter } = require("../src/routes/Skill/Get-Skill");
+const { UpdateSkillRouter } = require("./routes/Skill/Update-Skill");
 
 // asign Routers
 app.use("/", registerRoute); // Use the registerRoute for handling requests to the root path ("/")
-app.use("/", loginRoute) 
-app.use("/", logoutRoute)
-app.use("/", profileRouter)
-app.use("/", editProfileRouter)
-app.use("/", publicProfileRouter)
-app.use("/api/v1/users/me/skills", AddSkillRouter)
-app.use("/api/v1/users/me/skills", GetSkillRouter)
+app.use("/", loginRoute);
+app.use("/", logoutRoute);
+app.use("/", profileRouter);
+app.use("/", editProfileRouter);
+app.use("/", publicProfileRouter);
+app.use("/api/v1/users/me/skills", AddSkillRouter);
+app.use("/api/v1/users/me/skills", GetSkillRouter);
+app.use("/api/v1/users/me/skills", UpdateSkillRouter);
 
 // connect to the mongoDB database using the connectDB function
 connectDB()
