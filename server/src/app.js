@@ -21,6 +21,9 @@ const { CreateExchangeRequestRouter } = require("./routes/ExchangeRequest/Create
 const { IncomingExchangeRequestRouter } = require("./routes/ExchangeRequest/Incoming-Exchange-Request");
 const { OutgoingExchangeRequestRouter } = require("./routes/ExchangeRequest/Outgoing-Exchange-Request");
 const { AcceptExchangeRequestRouter } = require("./routes/ExchangeRequest/Accept-Exchange-Request")
+const { RejectExchangeRequestRouter } = require("./routes/ExchangeRequest/Reject-Exchange-Request")
+const { CancelExchangeRequestRouter } = require("./routes/ExchangeRequest/Cancel-Exchange-Request")
+const { CompleteExchangeRequestRouter } = require("./routes/ExchangeRequest/Complete-Exchange-Request")
 
 // asign Routers
 app.use("/", registerRoute); // Use the registerRoute for handling requests to the root path ("/")
@@ -37,6 +40,9 @@ app.use("/api/v1/exchange-requests", CreateExchangeRequestRouter);
 app.use("/api/v1/exchange-requests", IncomingExchangeRequestRouter);
 app.use("/api/v1/exchange-requests", OutgoingExchangeRequestRouter);
 app.use("/api/v1/exchange-requests", AcceptExchangeRequestRouter)
+app.use("/api/v1/exchange-requests", RejectExchangeRequestRouter)
+app.use("/api/v1/exchange-requests", CancelExchangeRequestRouter)
+app.use("/api/v1/exchange-requests", CompleteExchangeRequestRouter)
 
 // connect to the mongoDB database using the connectDB function
 connectDB()
