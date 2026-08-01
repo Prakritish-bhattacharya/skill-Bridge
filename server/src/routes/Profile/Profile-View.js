@@ -6,22 +6,45 @@ const profileRouter = express.Router();
 profileRouter.get("/profile/view", userAuth, async (req, res) => {
   try {
     //  Select which user fields to expose in the API response
-    const { firstName, lastName, gender, credits } = req.user;
+    const {
+      _id,
+      firstName,
+      lastName,
+      emailId,
+      gender,
+      photoUrl,
+      credits,
+      skills,
+    } = req.user;
+    const formattedSkills = skills.map((skill) => ({
+      _id: skill._id,
+      skillName: skill.skillName,
+      category: skill.category,
+      type: skill.type,
+      level: skill.level,
+      experience: skill.experience,
+      description: skill.description,
+    }));
 
     return res.status(200).json({
       success: true,
-      message: `${firstName}'s profile`,
-      user: {
+      message: "Profile fetched successfully.",
+      data: {
+        _id,
         firstName,
         lastName,
+        emailId,
         gender,
+        photoUrl,
         credits,
+        skills: formattedSkills,
       },
     });
   } catch (error) {
-    return res.status(400).json({
+    console.error(error);
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to Fetch Profile.",
     });
   }
 });
