@@ -1,87 +1,132 @@
 const express = require("express");
-const { UserModel } = require("../../models/User-Model");
 const bcrypt = require("bcrypt");
-const {userAuth} = require("../../middleware/userAuth")
+
+const { UserModel } = require("../../models/User-Model");
+const { userAuth } = require("../../middleware/userAuth");
+const { validateLoginCred } = require("../../utils/Validate-Login-Cred");
+
 const loginRoute = express.Router();
 const logoutRoute = express.Router();
 
+/**
+ * ======================================
+ * Login User
+ * POST /api/v1/login
+ * ======================================
+ */
 loginRoute.post("/login", async (req, res) => {
   try {
-    // Get user emailId and password from request body
+    // ======================================
+    // Validate & Sanitize Request
+    // ======================================
+    validateLoginCred(req);
+
     const { emailId, password } = req.body;
 
-    // Find user by emailId
+    // ======================================
+    // Find User
+    // ======================================
     const user = await UserModel.findOne({ emailId }).select(
-      "firstName lastName gender credits password",
+      "_id firstName lastName emailId gender photoUrl credits password lastLogin",
     );
 
-    // Check if user exists
     if (!user) {
-      throw new Error("Invalid email or password.");
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password.",
+      });
     }
 
-    /*
-     * Compare entered password with hashed password
-     */
+    // ======================================
+    // Verify Password
+    // ======================================
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
-      throw new Error("Invalid email or password.");
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password.",
+      });
     }
-    /**
-     * Take the password property and assign it to _ (which we intentionally ignore),
-     * and put the remaining properties into userResponse.
-     * */
-    const { password: _, ...userResponse } = user.toObject(); //
 
-    // create JWT Token
+    // ======================================
+    // Generate JWT
+    // ======================================
     const token = await user.getJWT();
-    // Add the token to cookie and send the response back to server
+
+    // ======================================
+    // Set Authentication Cookie
+    // ======================================
     res.cookie("token", token, {
       httpOnly: true,
       sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    // Last login status
+    // ======================================
+    // Update Last Login
+    // ======================================
     user.lastLogin = new Date();
-    await user.save(); // save last login date
+    await user.save();
 
-    // Success response
+    // ======================================
+    // Success Response
+    // ======================================
     return res.status(200).json({
       success: true,
       message: "Login successful.",
-      user: userResponse,
+      data: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        emailId: user.emailId,
+        gender: user.gender,
+        photoUrl: user.photoUrl,
+        credits: user.credits,
+      },
     });
   } catch (error) {
-    console.log(error);
-    return res.status(401).json({
+    console.error(error);
+
+    if (error instanceof Error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: "Login Failed !!!",
+      message: "Internal Server Error.",
     });
   }
 });
 
+/**
+ * ======================================
+ * Logout User
+ * POST /api/v1/logout
+ * ======================================
+ */
 logoutRoute.post("/logout", userAuth, (req, res) => {
   try {
-
-    const user = req.user
     res.clearCookie("token", {
       httpOnly: true,
       sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
     });
 
     return res.status(200).json({
       success: true,
-      message: ` ${user.firstName} Logout successfully.`,
+      message: "Logout successful.",
     });
-
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
-    return res.status(400).json({
+    return res.status(500).json({
       success: false,
-      message: "Logout failed.",
+      message: "Failed to logout.",
     });
   }
 });

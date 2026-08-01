@@ -10,33 +10,49 @@ editProfileRouter.patch("/profile/edit", userAuth, async (req, res) => {
   try {
     // Validate & sanitize request
     validateEditProfileData(req);
-
+    // ===============================
+    // Logged In User
+    // ===============================
     const loggedInUser = req.user;
 
-    // Update fields
+    // ===============================
+    // Update Allowed Fields
+    // ===============================
     Object.keys(req.body).forEach((key) => {
       loggedInUser[key] = req.body[key];
     });
 
-    // Save updated document
+    // ===============================
+    // Save Updated Profile
+    // ===============================
     await loggedInUser.save();
 
-    const { firstName, lastName, gender, photoUrl } = loggedInUser;
+    const { _id, firstName, lastName, gender, photoUrl } = loggedInUser;
 
     return res.status(200).json({
       success: true,
-      message: `${firstName}'s profile updated successfully.`,
-      user: {
+      message: "Profile updated successfully.",
+      data: {
+        _id,
         firstName,
         lastName,
         gender,
-        photoUrl
+        photoUrl,
       },
     });
   } catch (error) {
-    return res.status(400).json({
+    console.error(error);
+
+    if (error instanceof Error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to update profile.",
     });
   }
 });

@@ -1,3 +1,4 @@
+require("dotenv").config(); // Load environment variables from .env file
 const express = require("express"); // Import the express module to create an Express application
 const { connectDB } = require("./config/database"); // Import the connectDB function from the database configuration file to establish a connection to the MongoDB database
 const cookieparser = require("cookie-parser");
@@ -49,8 +50,8 @@ connectDB()
   .then(() => {
     console.log("Database connected successfully...");
     // start the server
-    app.listen(7777, () => {
-      console.log("Server started at port number 7777"); // Start the server and listen on port 7777, logging a message to the console when the server starts
+    app.listen(process.env.PORT, () => {
+      console.log(`Server started at port number ${process.env.PORT}`);
     });
   })
   .catch((error) => {

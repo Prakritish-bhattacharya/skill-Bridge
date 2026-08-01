@@ -1,87 +1,110 @@
 const express = require("express");
 const mongoose = require("mongoose");
 
-const { UserModel } = require("../../models/User-Model"); // require user model for search user
-const { userAuth } = require("../../middleware/userAuth"); // import Authentication middleware which servs only authenticate users
+const { UserModel } = require("../../models/User-Model");
+const { userAuth } = require("../../middleware/userAuth");
 
-const publicProfileRouter = express.Router(); // route initialize for public profile
+const publicProfileRouter = express.Router();
 
 /**
  * ==========================================
  * GET /public/:userId
- * View another user's public profile
+ * View Another User's Public Profile
  * ==========================================
  */
 
 publicProfileRouter.get("/public/:userId", userAuth, async (req, res) => {
   try {
-    // extract user ID form req.params
+    // =====================================
+    // Extract User ID
+    // =====================================
     const { userId } = req.params;
 
-    /**
-     * ------------------------------------
-     * Validate Mongo ObjectId
-     * ------------------------------------
-     */
-
+    // =====================================
+    // Validate Mongo ObjectId
+    // =====================================
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      throw new Error("Invalid User ID !!!");
+      return res.status(400).json({
+        success: false,
+        message: "Invalid User ID.",
+      });
     }
 
-    /**
-     * ---------------------------------------
-     * Prevent Viewing your own public profile
-     * ---------------------------------------
-     */
-
+    // =====================================
+    // Prevent Viewing Own Public Profile
+    // =====================================
     if (req.user._id.toString() === userId) {
-      throw new Error("Use /profile/view to access your own profile.");
+      return res.status(400).json({
+        success: false,
+        message: "Use /profile/view to access your own profile.",
+      });
     }
 
-    /**
-     * ---------------------------------------
-     * Find user
-     * Only select PUBLIC fields
-     * ---------------------------------------
-     */
-
+    // =====================================
+    // Find User
+    // Only Select Public Fields
+    // =====================================
     const publicUser = await UserModel.findById(userId).select(
-      "firstName lastName gender photoUrl",
+      "firstName lastName gender photoUrl skills"
     );
 
-    /**
-     * ---------------------------------------
-     * User exists ?
-     * ---------------------------------------
-     */
+    // =====================================
+    // User Exists?
+    // =====================================
     if (!publicUser) {
-      throw new Error("User not found !!!");
+      return res.status(404).json({
+        success: false,
+        message: "User not found.",
+      });
     }
 
-    /**
-     * ---------------------------------------
-     *  Future Security
-     *  Skip blocked / suspended users
-     * ---------------------------------------
-     */
+    // =====================================
+    // Future Security
+    // Skip Suspended / Blocked Users
+    // =====================================
+    /*
+    if (publicUser.status !== "active") {
+      return res.status(403).json({
+        success: false,
+        message: "Profile is not available.",
+      });
+    }
+    */
 
-    // if (publicUser.status !== "active") {
-    //   throw new Error("Profile is not Available !!!");
-    // }
-    
-    // ------------------------------------------------------
-    // Success
-    // ------------------------------------------------------
+    // =====================================
+    // Format Skills
+    // =====================================
+    const formattedSkills = publicUser.skills.map((skill) => ({
+      _id: skill._id,
+      skillName: skill.skillName,
+      category: skill.category,
+      type: skill.type,
+      level: skill.level,
+      experience: skill.experience,
+      description: skill.description,
+    }));
 
+    // =====================================
+    // Success Response
+    // =====================================
     return res.status(200).json({
       success: true,
       message: "Public profile fetched successfully.",
-      user: publicUser,
+      data: {
+        _id: publicUser._id,
+        firstName: publicUser.firstName,
+        lastName: publicUser.lastName,
+        gender: publicUser.gender,
+        photoUrl: publicUser.photoUrl,
+        skills: formattedSkills,
+      },
     });
   } catch (error) {
-    return res.status(400).json({
+    console.error(error);
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Failed to fetch public profile.",
     });
   }
 });

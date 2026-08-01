@@ -1,38 +1,78 @@
-const { UserModel } = require("../models/User-Model");
 const jwt = require("jsonwebtoken");
+const { UserModel } = require("../models/User-Model");
 
+/**
+ * ======================================
+ * Authentication Middleware
+ * ======================================
+ */
 const userAuth = async (req, res, next) => {
   try {
-    // read jwt token from cookie
+    // ===============================
+    // Read JWT Token
+    // ===============================
     const { token } = req.cookies;
 
-    // check if token exists
     if (!token) {
-      throw new Error("Please Login !!!");
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized.",
+      });
     }
 
-    // verify JWT
-    const decodeObj = jwt.verify(token, "skillBridge@123@#$&*");
+    // ===============================
+    // Ensure JWT Secret Exists
+    // ===============================
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT secret is not configured.");
+    }
 
-    // Extract user id
-    const { _id } = decodeObj;
+    // ===============================
+    // Verify JWT
+    // ===============================
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
 
-    // find user
-    const user = await UserModel.findById(_id);
+    // ===============================
+    // Extract User ID
+    // ===============================
+    const { _id } = decodedToken;
+
+    // ===============================
+    // Find User
+    // ===============================
+    const user = await UserModel.findById(_id).select(
+      "_id firstName lastName emailId gender photoUrl credits skills",
+    );
 
     if (!user) {
-      throw new Error("User not found !!!");
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized.",
+      });
     }
 
-    // Attached LoggedIn user to request
+    // ===============================
+    // Attach User
+    // ===============================
     req.user = user;
 
-    // Move  to next Middleware
     next();
   } catch (error) {
-    return res.status(401).json({
+    console.error(error);
+
+    if (
+      error instanceof jwt.TokenExpiredError ||
+      error instanceof jwt.JsonWebTokenError
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized.",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: "Unauthorized",
+      message: "Internal Server Error.",
     });
   }
 };

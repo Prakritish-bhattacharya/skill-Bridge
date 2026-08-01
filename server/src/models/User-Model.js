@@ -196,7 +196,7 @@ const registerUserSchema = new mongoose.Schema(
 registerUserSchema.methods.getJWT = function () {
   const user = this;
 
-  const token = jwt.sign({ _id: user._id }, "skillBridge@123@#$&*", {
+  const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
   return token;
