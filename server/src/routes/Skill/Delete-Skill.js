@@ -14,7 +14,7 @@ const DeleteSkillRouter = express.Router();
 DeleteSkillRouter.delete("/:skillId", userAuth, async (req, res) => {
   try {
     // ===============================
-    // Logged In User
+    // Authenticated User
     // ===============================
     const loggedInUser = req.user;
 
@@ -29,7 +29,7 @@ DeleteSkillRouter.delete("/:skillId", userAuth, async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(skillId)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid skill id.",
+        message: "Invalid Skill Id.",
       });
     }
 
@@ -48,14 +48,18 @@ DeleteSkillRouter.delete("/:skillId", userAuth, async (req, res) => {
       });
     }
 
+    // ===============================
+    // Preserve Deleted Skill
+    // ===============================
     const deletedSkill = skill.toObject();
+
     // ===============================
     // Delete Skill
     // ===============================
     skill.deleteOne();
 
     // ===============================
-    // Save Updated User
+    // Persist Changes
     // ===============================
     await loggedInUser.save();
 
@@ -65,10 +69,25 @@ DeleteSkillRouter.delete("/:skillId", userAuth, async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Skill deleted successfully.",
-      skill: deletedSkill,
+      data: {
+        _id: deletedSkill._id,
+        skillName: deletedSkill.skillName,
+        category: deletedSkill.category,
+        type: deletedSkill.type,
+        level: deletedSkill.level,
+        experience: deletedSkill.experience,
+        description: deletedSkill.description,
+      },
     });
   } catch (error) {
     console.error(error);
+
+    if (error instanceof Error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
 
     return res.status(500).json({
       success: false,
