@@ -1,32 +1,26 @@
 const express = require("express");
 
 const { userAuth } = require("../../middleware/userAuth");
-const { validateSkillData } = require("../../utils/validate-Skill-Data");
 
 const GetSkillRouter = express.Router();
 
 /**
  * ======================================
- * Get Logged In User Skills
+ * Get Logged-In User Skills
  * GET /api/v1/users/me/skills
  * ======================================
  */
 GetSkillRouter.get("/", userAuth, async (req, res) => {
   try {
     // ===============================
-    // Logged In User
+    // Authenticated User
     // ===============================
     const loggedInUser = req.user;
 
     // ===============================
-    // Extract Skills
+    // Format Skills Response
     // ===============================
-    const skills = loggedInUser.skills;
-
-    // ===============================
-    // Sanitize Response
-    // ===============================
-    const sanitizedSkills = skills.map((skill) => ({
+    const formattedSkills = loggedInUser.skills.map((skill) => ({
       _id: skill._id,
       skillName: skill.skillName,
       category: skill.category,
@@ -41,20 +35,26 @@ GetSkillRouter.get("/", userAuth, async (req, res) => {
     // ===============================
     return res.status(200).json({
       success: true,
-      count: sanitizedSkills.length,
-      skills: sanitizedSkills,
+      message: "Skills fetched successfully.",
+      count: formattedSkills.length,
+      data: formattedSkills,
     });
 
   } catch (error) {
-    console.log(error)
+    console.error(error);
+
+    if (error instanceof Error) {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch skills.",
+      });
+    }
 
     return res.status(500).json({
-        success:false,
-        message:"Unable to fetch Skills."
-    })
+      success: false,
+      message: "Internal Server Error.",
+    });
   }
 });
 
-
-
-module.exports = {GetSkillRouter}
+module.exports = { GetSkillRouter };

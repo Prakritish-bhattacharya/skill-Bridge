@@ -17,21 +17,24 @@ AddSkillRouter.post("/", userAuth, async (req, res) => {
     // Validate Request Body
     // ===============================
     validateSkillData(req);
-    
 
     // ===============================
-    // Logged In User
+    // Authenticated User
     // ===============================
     const loggedInUser = req.user;
 
     // ===============================
-    // Duplicate skill check
+    // Normalize Skill Name
     // ===============================
-    const normalizedSkillName = req.body.skillName.trim().toLowerCase();
+    const sanitizedSkillName = req.body.skillName;
+    const normalizedSkillName = sanitizedSkillName.toLowerCase();
+    req.body.skillName = normalizedSkillName;
 
+    // ===============================
+    // Duplicate Skill Check
+    // ===============================
     const skillExists = loggedInUser.skills.some(
-      // some() ---> stops immediately after finding the first match in worst case T.C -> 0(n)
-      (skill) => skill.skillName.trim() === normalizedSkillName,
+      (skill) => skill.skillName.toLowerCase() === normalizedSkillName,
     );
 
     if (skillExists) {
@@ -41,13 +44,11 @@ AddSkillRouter.post("/", userAuth, async (req, res) => {
       });
     }
 
-    // ==============================
-    // Create New Skill Object
-    // (Whitelist only)
     // ===============================
-
+    // Create New Skill Object
+    // ===============================
     const newSkill = {
-      skillName: normalizedSkillName,
+      skillName: req.body.skillName,
       category: req.body.category,
       type: req.body.type,
       level: req.body.level,
@@ -59,7 +60,6 @@ AddSkillRouter.post("/", userAuth, async (req, res) => {
     // Add Skill
     // ===============================
     loggedInUser.skills.push(newSkill);
-    console.log(loggedInUser.skills)
 
     // ===============================
     // Save User
@@ -77,14 +77,29 @@ AddSkillRouter.post("/", userAuth, async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Skill added successfully.",
-      skill: addedSkill,
+      data: {
+        _id: addedSkill._id,
+        skillName: addedSkill.skillName,
+        category: addedSkill.category,
+        type: addedSkill.type,
+        level: addedSkill.level,
+        experience: addedSkill.experience,
+        description: addedSkill.description,
+      },
     });
   } catch (error) {
     console.error(error);
 
-    return res.status(400).json({
+    if (error instanceof Error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error.",
     });
   }
 });
