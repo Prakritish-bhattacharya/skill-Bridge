@@ -1,7 +1,7 @@
 const express = require("express");
 
 const { userAuth } = require("../../middleware/userAuth");
-const { userModel, UserModel } = require("../../models/User-Model");
+const { UserModel } = require("../../models/User-Model");
 const { ExchangeRequestModel } = require("../../models/ExchangeRequest-Model");
 const {
   validateExchangeRequest,
@@ -22,9 +22,9 @@ CreateExchangeRequestRouter.post("/", userAuth, async (req, res) => {
     // ===============================
     validateExchangeRequest(req);
 
-    //================================
-    // Logged-In User (Sender)
-    //================================
+    // ===============================
+    // Authenticated User (Sender)
+    // ===============================
     const sender = req.user;
 
     //================================
@@ -38,11 +38,10 @@ CreateExchangeRequestRouter.post("/", userAuth, async (req, res) => {
      * Sender cannot send request to himself
      * ===========================================
      */
-    // sender._id is a ObjectId() and receiverId is a String. So need to convert in string
     if (sender._id.toString() === receiverId) {
       return res.status(400).json({
         success: false,
-        message: "You cannot send an request to yourself !!!",
+        message: "You cannot send a request to yourself.",
       });
     }
     /**
@@ -51,11 +50,11 @@ CreateExchangeRequestRouter.post("/", userAuth, async (req, res) => {
      * Receiver must exists in the database
      * ===========================================
      */
-    const receiver = await UserModel.findById(receiverId);
+    const receiver = await UserModel.findById(receiverId).select("skills");
     if (!receiver) {
       return res.status(404).json({
         success: false,
-        message: "Receiver not found !!!",
+        message: "Receiver not found.",
       });
     }
     /**
@@ -68,7 +67,7 @@ CreateExchangeRequestRouter.post("/", userAuth, async (req, res) => {
     if (!offeredSkill) {
       return res.status(404).json({
         success: false,
-        message: "Offered Skill not found !!!",
+        message: "Offered skill not found.",
       });
     }
     // console.log(offeredSkill);
@@ -83,7 +82,7 @@ CreateExchangeRequestRouter.post("/", userAuth, async (req, res) => {
     if (!requestedSkill) {
       return res.status(404).json({
         success: false,
-        message: "Requested Skill not found !!!",
+        message: "Requested skill not found.",
       });
     }
 
@@ -96,7 +95,7 @@ CreateExchangeRequestRouter.post("/", userAuth, async (req, res) => {
     if (offeredSkill.type !== "Teach") {
       return res.status(400).json({
         success: false,
-        message: "Only teaching skill can be offered for exchange !!!",
+        message: "Only teaching skills can be requested for exchange.",
       });
     }
     /**
@@ -119,16 +118,27 @@ CreateExchangeRequestRouter.post("/", userAuth, async (req, res) => {
      * ==========================================
      */
     const existingRequest = await ExchangeRequestModel.findOne({
-      sender: sender._id,
-      receiver: receiver._id,
-      offeredSkill: offeredSkill._id,
-      requestedSkill: requestedSkill._id,
       status: "Pending",
+      $or: [
+        {
+          sender: sender._id,
+          receiver: receiver._id,
+          offeredSkill: offeredSkill._id,
+          requestedSkill: requestedSkill._id,
+        },
+        {
+          sender: receiver._id,
+          receiver: sender._id,
+          offeredSkill: requestedSkill._id,
+          requestedSkill: offeredSkill._id,
+        },
+      ],
     });
     if (existingRequest) {
       return res.status(409).json({
         success: false,
-        message: "Exchange request already exists !!!",
+        message:
+          "A pending exchange request already exists between these two skills.",
       });
     }
 
@@ -159,15 +169,33 @@ CreateExchangeRequestRouter.post("/", userAuth, async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Step 1 completed successfully...",
-      data: exchangeRequest,
+      message: "Exchange request sent successfully.",
+      data: {
+        _id: exchangeRequest._id,
+        sender: exchangeRequest.sender,
+        receiver: exchangeRequest.receiver,
+        offeredSkill: exchangeRequest.offeredSkill,
+        offeredSkillName: exchangeRequest.offeredSkillName,
+        requestedSkill: exchangeRequest.requestedSkill,
+        requestedSkillName: exchangeRequest.requestedSkillName,
+        status: exchangeRequest.status,
+        message: exchangeRequest.message,
+        createdAt: exchangeRequest.createdAt,
+      },
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
-    return res.status(400).json({
+    if (error instanceof Error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error.",
     });
   }
 });

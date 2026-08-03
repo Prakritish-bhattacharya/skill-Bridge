@@ -8,22 +8,25 @@ const validator = require("validator");
  */
 const validateExchangeRequest = (req) => {
   //=============================
-  // Sanitize request Body
-  // ============================
-  if (req.body.receiverId) {
-    req.body.receiverId = req.body.receiverId.trim();
+  // Allowed Fields Validation
+  //=============================
+  const allowedFields = [
+    "receiverId",
+    "offeredSkillId",
+    "requestedSkillId",
+    "message",
+  ];
+  const requestFields = Object.keys(req.body);
+  if (requestFields.length === 0) {
+    throw new Error("Request Body cannot be empty.");
   }
 
-  if (req.body.offeredSkillId) {
-    req.body.offeredSkillId = req.body.offeredSkillId.trim();
-  }
+  const isValidRequest = requestFields.every((field) =>
+    allowedFields.includes(field),
+  );
 
-  if (req.body.requestedSkillId) {
-    req.body.requestedSkillId = req.body.requestedSkillId.trim();
-  }
-
-  if (req.body.message) {
-    req.body.message = req.body.message.trim();
+  if (!isValidRequest) {
+    throw new Error("Invalid request field.");
   }
 
   // ======================================
@@ -32,40 +35,100 @@ const validateExchangeRequest = (req) => {
   const { receiverId, offeredSkillId, requestedSkillId, message } = req.body;
 
   // ======================================
-  // Required Skill Validation
+  // Receiver Id Validation
   // ======================================
-  if (!receiverId) {
-    throw new Error("Receiver Id is Required !!!");
+
+  // Type Validation
+  if (typeof receiverId !== "string") {
+    throw new Error("Invalid Receiver Id.");
   }
 
-  if (!offeredSkillId) {
-    throw new Error("Offered Skill Id is required !!!");
+  // Sanitize
+  req.body.receiverId = receiverId.trim();
+
+  const sanitizedReceiverId = req.body.receiverId;
+
+  // Empty Validation
+  if (validator.isEmpty(sanitizedReceiverId)) {
+    throw new Error("Receiver Id is required.");
   }
 
-  if (!requestedSkillId) {
-    throw new Error("Requested Skill Id is required !!!");
+  // MongoDB ObjectId Validation
+  if (!mongoose.Types.ObjectId.isValid(sanitizedReceiverId)) {
+    throw new Error("Invalid Receiver Id.");
   }
 
   // ======================================
-  // MongoDB ObjectId validation
+  // Offered Skill Id Validation
   // ======================================
-  if (!mongoose.Types.ObjectId.isValid(receiverId)) {
-    throw new Error("Invalid Receiver Id !!!");
+
+  // Type Validation
+  if (typeof offeredSkillId !== "string") {
+    throw new Error("Invalid Offered Skill Id.");
   }
 
-  if (!mongoose.Types.ObjectId.isValid(offeredSkillId)) {
-    throw new Error("Invalid Offered Skill Id !!!");
+  // Sanitize
+  req.body.offeredSkillId = offeredSkillId.trim();
+
+  const sanitizedOfferedSkillId = req.body.offeredSkillId;
+
+  // Empty Validation
+  if (validator.isEmpty(sanitizedOfferedSkillId)) {
+    throw new Error("Offered Skill Id is required.");
   }
 
-  if (!mongoose.Types.ObjectId.isValid(requestedSkillId)) {
-    throw new Error("Invalid Request Skill Id !!!");
+  // MongoDB ObjectId Validation
+  if (!mongoose.Types.ObjectId.isValid(sanitizedOfferedSkillId)) {
+    throw new Error("Invalid Offered Skill Id.");
+  }
+
+  // ======================================
+  // Requested Skill Id Validation
+  // ======================================
+
+  // Type Validation
+  if (typeof requestedSkillId !== "string") {
+    throw new Error("Invalid Requested Skill Id.");
+  }
+
+  // Sanitize
+  req.body.requestedSkillId = requestedSkillId.trim();
+
+  const sanitizedRequestedSkillId = req.body.requestedSkillId;
+
+  // Empty Validation
+  if (validator.isEmpty(sanitizedRequestedSkillId)) {
+    throw new Error("Requested Skill Id is required.");
+  }
+
+  // MongoDB ObjectId Validation
+  if (!mongoose.Types.ObjectId.isValid(sanitizedRequestedSkillId)) {
+    throw new Error("Invalid Requested Skill Id.");
   }
 
   // ======================================
   // Message Validation
   // ======================================
-  if (message && !validator.isLength(message, { max: 300 })) {
-    throw new Error("Message cannot be exceed 300 characters !!!");
+  if ("message" in req.body) {
+    // Type Validation
+    if (typeof message !== "string") {
+      throw new Error("Message must be a string.");
+    }
+
+    // Sanitize
+    req.body.message = message.trim();
+
+    const sanitizedMessage = req.body.message;
+
+    // Maximum Length
+    if (!validator.isLength(sanitizedMessage, { max: 300 })) {
+      throw new Error("Message cannot exceed 300 characters.");
+    }
+
+    // Prevent HTML / XSS
+    if (/<[^>]*>/.test(sanitizedMessage)) {
+      throw new Error("Message contains invalid content.");
+    }
   }
 };
 

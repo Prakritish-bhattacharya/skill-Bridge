@@ -25,7 +25,7 @@ CancelExchangeRequestRouter.patch(
       if (!mongoose.Types.ObjectId.isValid(requestId)) {
         return res.status(400).json({
           success: false,
-          message: "Invalid Request Id !!!",
+          message: "Invalid request id.",
         });
       }
 
@@ -37,24 +37,28 @@ CancelExchangeRequestRouter.patch(
       if (!exchangeRequest) {
         return res.status(404).json({
           success: false,
-          message: "Exchange Request not found !!!",
+          message: "Exchange request not found.",
         });
       }
 
       // ===============================
-      // Logged-In User
+      // Authenticated User
       // ===============================
-      const loggedInUser = req.user;
+      const authenticatedUser = req.user;
       // ===============================
       // Business Rule #3
       // Only Sender can Cancel
       // ===============================
-      if (exchangeRequest.sender.toString() !== loggedInUser._id.toString()) {
-        return res.status(403).json({
-          success: false,
-          message: "You are not authorized to cancel this exchange request !!!",
-        });
-      }
+      const isSender =
+  exchangeRequest.sender.toString() ===
+  authenticatedUser._id.toString();
+
+if (!isSender) {
+  return res.status(403).json({
+    success: false,
+    message: "You are not authorized to cancel this exchange request.",
+  });
+}
       // ===============================
       // Business Rule #4
       // Only Pending requests can be cancelled
@@ -62,11 +66,11 @@ CancelExchangeRequestRouter.patch(
       if (exchangeRequest.status !== "Pending") {
         return res.status(400).json({
           success: false,
-          message: "Only pending exchange requests can be cancelled !!!",
+          message: "Only pending exchange requests can be cancelled.",
         });
       }
       // ===============================
-      // Business Rule #6
+      // Business Rule #5
       // Update Exchange Request Status
       // ===============================
       exchangeRequest.status = "Cancelled";
@@ -76,15 +80,34 @@ CancelExchangeRequestRouter.patch(
       return res.status(200).json({
         success: true,
         message: "Exchange request cancelled successfully.",
-        data: exchangeRequest,
+        data: {
+  _id: exchangeRequest._id,
+  sender: exchangeRequest.sender,
+  receiver: exchangeRequest.receiver,
+  offeredSkill: exchangeRequest.offeredSkill,
+  offeredSkillName: exchangeRequest.offeredSkillName,
+  requestedSkill: exchangeRequest.requestedSkill,
+  requestedSkillName: exchangeRequest.requestedSkillName,
+  status: exchangeRequest.status,
+  message: exchangeRequest.message,
+  createdAt: exchangeRequest.createdAt,
+  updatedAt: exchangeRequest.updatedAt,
+}
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
 
-      return res.status(500).json({
-        success: false,
-        message: error.message,
-      });
+if (error instanceof Error) {
+  return res.status(400).json({
+    success: false,
+    message: error.message,
+  });
+}
+
+return res.status(500).json({
+  success: false,
+  message: "Internal Server Error.",
+});
     }
   },
 );

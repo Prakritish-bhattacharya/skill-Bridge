@@ -13,13 +13,13 @@ IncomingExchangeRequestRouter.get("/incoming", userAuth, async (req, res) => {
     // ===============================
     // Logged-In User
     // ===============================
-    const loggedInUser = req.user;
+    const authenticatedUser = req.user;
 
     //================================
     // Fetch Incoming Exchange Request
     //================================
     const incomingRequests = await ExchangeRequestModel.find({
-      receiver: loggedInUser._id,
+      receiver: authenticatedUser._id,
     })
       .populate("sender", "firstName lastName photoUrl skills") // populate() tells mongoose---go to the users collection, find the user, and replace the ObjectId with selected Fields
       .sort({ createdAt: -1 });
@@ -37,14 +37,17 @@ IncomingExchangeRequestRouter.get("/incoming", userAuth, async (req, res) => {
           photoUrl: request.sender.photoUrl,
         },
 
-        offeredSkill: {
-          skillName: offeredSkill.skillName,
-          category: offeredSkill.category,
-          type: offeredSkill.type,
-          level: offeredSkill.level,
-          experience: offeredSkill.experience,
-          description: offeredSkill.description,
-        },
+        offeredSkill: offeredSkill
+          ? {
+              _id: offeredSkill._id,
+              skillName: offeredSkill.skillName,
+              category: offeredSkill.category,
+              type: offeredSkill.type,
+              level: offeredSkill.level,
+              experience: offeredSkill.experience,
+              description: offeredSkill.description,
+            }
+          : null,
 
         requestedSkillName: request.requestedSkillName,
         message: request.message,
@@ -59,19 +62,21 @@ IncomingExchangeRequestRouter.get("/incoming", userAuth, async (req, res) => {
     return res.status(200).json({
       success: true,
       count: incomingRequests.length,
-      // requests: incomingRequests,
-      requests: formattedRequests,
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Route reached Successfullt...",
+      data: formattedRequests,
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
+
+    if (error instanceof Error) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error.",
     });
   }
 });

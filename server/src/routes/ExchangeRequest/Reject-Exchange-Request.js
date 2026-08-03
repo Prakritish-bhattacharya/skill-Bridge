@@ -26,7 +26,7 @@ RejectExchangeRequestRouter.patch(
       if (!mongoose.Types.ObjectId.isValid(requestId)) {
         return res.status(400).json({
           success: false,
-          message: "Invalid Request Id !!!",
+          message: "Invalid request id.",
         });
       }
 
@@ -39,22 +39,26 @@ RejectExchangeRequestRouter.patch(
       if (!exchangeRequest) {
         return res.status(404).json({
           success: false,
-          message: "Exchange Request Not Found !!!",
+          message: "Exchange request not found.",
         });
       }
 
       //===============================
-      // Logged In User
+      // Authenticated User
       //===============================
-      const loggedInUser = req.user;
+      const authenticatedUser = req.user;
       // ===============================
       // Business Rule #3
       // Only Receiver can Reject
       // ===============================
-      if (exchangeRequest.receiver.toString() !== loggedInUser._id.toString()) {
+      const isReceiver =
+        exchangeRequest.receiver.toString() ===
+        authenticatedUser._id.toString();
+
+      if (!isReceiver) {
         return res.status(403).json({
           success: false,
-          message: "You are not authorized to reject this exchange request !!!",
+          message: "You are not authorized to reject this exchange request.",
         });
       }
 
@@ -65,7 +69,7 @@ RejectExchangeRequestRouter.patch(
       if (exchangeRequest.status !== "Pending") {
         return res.status(400).json({
           success: false,
-          message: "Only pending exchange requests can be rejected !!!",
+          message: "Only pending exchange requests can be rejected.",
         });
       }
       // ===============================
@@ -75,19 +79,36 @@ RejectExchangeRequestRouter.patch(
       exchangeRequest.status = "Rejected";
       await exchangeRequest.save();
 
-
-
       return res.status(200).json({
         success: true,
         message: "Exchange request rejected successfully.",
-        data: exchangeRequest,
+        data: {
+          _id: exchangeRequest._id,
+          sender: exchangeRequest.sender,
+          receiver: exchangeRequest.receiver,
+          offeredSkill: exchangeRequest.offeredSkill,
+          offeredSkillName: exchangeRequest.offeredSkillName,
+          requestedSkill: exchangeRequest.requestedSkill,
+          requestedSkillName: exchangeRequest.requestedSkillName,
+          status: exchangeRequest.status,
+          message: exchangeRequest.message,
+          createdAt: exchangeRequest.createdAt,
+          updatedAt: exchangeRequest.updatedAt,
+        },
       });
     } catch (error) {
-      console.log(error);
+      console.error(error);
+
+      if (error instanceof Error) {
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+      }
 
       return res.status(500).json({
         success: false,
-        message: error.message,
+        message: "Internal Server Error.",
       });
     }
   },

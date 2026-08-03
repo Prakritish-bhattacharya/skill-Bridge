@@ -27,7 +27,7 @@ AcceptExchangeRequestRouter.patch(
       if (!mongoose.Types.ObjectId.isValid(requestId)) {
         return res.status(400).json({
           success: false,
-          message: "Invalid Request Id !!!",
+          message: "Invalid request id.",
         });
       }
 
@@ -42,23 +42,27 @@ AcceptExchangeRequestRouter.patch(
       if (!exchangeRequest) {
         return res.status(404).json({
           success: false,
-          message: "Exchange Request not found !!!",
+          message: "Exchange request not found.",
         });
       }
 
       // ===============================
       // Logged-In User
       // ===============================
-      const loggedInUser = req.user;
+      const authenticatedUser = req.user;
       // ===============================
       // Business Rule #3
       // Compare the receiver with the logged-in user
       // Only Receiver can Accept
       // ===============================
-      if (exchangeRequest.receiver.toString() !== loggedInUser._id.toString()) {
+      const isReceiver =
+        exchangeRequest.receiver.toString() ===
+        authenticatedUser._id.toString();
+
+      if (!isReceiver) {
         return res.status(403).json({
           success: false,
-          message: "You are not authorized to accept this exchange request !!!",
+          message: "You are not authorized to accept this exchange request.",
         });
       }
 
@@ -69,7 +73,7 @@ AcceptExchangeRequestRouter.patch(
       if (exchangeRequest.status !== "Pending") {
         return res.status(400).json({
           success: false,
-          message: "Only pending exchange requests can be accepted !!!",
+          message: "Only pending exchange requests can be accepted.",
         });
       }
 
@@ -83,15 +87,33 @@ AcceptExchangeRequestRouter.patch(
       return res.status(200).json({
         success: true,
         message: "Exchange request accepted successfully.",
-        data: exchangeRequest,
+        data: {
+          _id: exchangeRequest._id,
+          sender: exchangeRequest.sender,
+          receiver: exchangeRequest.receiver,
+          offeredSkill: exchangeRequest.offeredSkill,
+          offeredSkillName: exchangeRequest.offeredSkillName,
+          requestedSkill: exchangeRequest.requestedSkill,
+          requestedSkillName: exchangeRequest.requestedSkillName,
+          status: exchangeRequest.status,
+          message: exchangeRequest.message,
+          createdAt: exchangeRequest.createdAt,
+          updatedAt: exchangeRequest.updatedAt,
+        },
       });
-
-      
     } catch (error) {
-      console.log(error);
+      console.error(error);
+
+      if (error instanceof Error) {
+        return res.status(400).json({
+          success: false,
+          message: error.message,
+        });
+      }
+
       return res.status(500).json({
         success: false,
-        message: error.message,
+        message: "Internal Server Error.",
       });
     }
   },
