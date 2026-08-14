@@ -4,6 +4,17 @@ const { connectDB } = require("./config/database"); // Import the connectDB func
 const cookieparser = require("cookie-parser");
 const app = express(); // Create an instance of the Express application
 app.use(express.json()); // Middleware to parse JSON request bodies
+// ===============================
+// Middleware
+// ===============================
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
 app.use(cookieparser());
 // import Routes from routes folder
 const { registerRoute } = require("./routes/Authentication/Register-route");
@@ -25,6 +36,8 @@ const { AcceptExchangeRequestRouter } = require("./routes/ExchangeRequest/Accept
 const { RejectExchangeRequestRouter } = require("./routes/ExchangeRequest/Reject-Exchange-Request")
 const { CancelExchangeRequestRouter } = require("./routes/ExchangeRequest/Cancel-Exchange-Request")
 const { CompleteExchangeRequestRouter } = require("./routes/ExchangeRequest/Complete-Exchange-Request")
+
+
 
 // asign Routers
 app.use("/", registerRoute); // Use the registerRoute for handling requests to the root path ("/")
